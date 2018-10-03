@@ -1,0 +1,11 @@
+{
+	"name": "Zhihu Fetch",
+	"description": "Example of a page plugin",
+	"version": "1.1",
+	"date": "2018-10-03",
+	"author": "xiaochi",
+	"author_uri": "http://picasso250.github.io/",
+	"license": "GPLv3",
+	"min_q2a": "1.5",
+	"load_order": "after_db_init"
+}

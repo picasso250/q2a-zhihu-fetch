@@ -1,6 +1,6 @@
 {
 	"name": "Zhihu Fetch",
-	"description": "Example of a page plugin",
+	"description": "从知乎上转载文章",
 	"version": "1.1",
 	"date": "2018-10-03",
 	"author": "xiaochi",

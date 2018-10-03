@@ -120,7 +120,7 @@ ENGINE=InnoDB
 			// file_put_contents(__DIR__.'/cache', $html);
 
 			$doc = phpQuery::newDocument($html);
-			$answer_content = $doc['.RichText']->html();
+			$answer_content = $doc['.AnswerItem .RichContent-inner .RichText']->html();
 			$u = $doc['.UserLink-link'];
 			$href= $u->attr('href');
 			if (preg_match('#/([^/]+)$#', $href, $m)) {

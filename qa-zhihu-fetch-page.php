@@ -105,7 +105,7 @@ ENGINE=InnoDB
 		return $postid;
 	}
 	function fetch($url) {
-		if (is_file(__DIR__.'/cache')) {
+		if (0&&is_file(__DIR__.'/cache')) {
 			$html = file_get_contents(__DIR__.'/cache');
 		} else {
 			$html = file_get_contents($url);

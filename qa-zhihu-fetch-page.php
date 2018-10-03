@@ -84,6 +84,8 @@ ENGINE=InnoDB
 			$userid = qa_db_connection()->insert_id;
 			qa_db_query_sub('INSERT INTO `^userpoints` (`userid`) VALUES (#)',
 			$userid);
+			qa_db_query_sub('INSERT INTO `^userprofile` (`userid`, title,content) VALUES (#,"name",$)',
+			$userid,$user_name);
 		}
 		return $userid;
 	}
@@ -105,7 +107,9 @@ ENGINE=InnoDB
 		return $postid;
 	}
 	function fetch($url) {
-		if (0&&is_file(__DIR__.'/cache')) {
+		if (
+			0&&
+			is_file(__DIR__.'/cache')) {
 			$html = file_get_contents(__DIR__.'/cache');
 		} else {
 			$html = file_get_contents($url);

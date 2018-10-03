@@ -75,7 +75,7 @@ ENGINE=InnoDB
 	function insert_q2a_user($user_id, $user_name)
 	{
 		$sql = 'SELECT userid from ^users where handle=$ limit 1';
-		$userid = qa_db_read_one_value(qa_db_query_sub($sql, $user_id), true);
+		$userid = qa_db_read_one_value(qa_db_query_sub($sql, $user_name), true);
 		if (!$userid) {
 			qa_db_query_sub('INSERT INTO `^users` 
 			(`created`, `createip`, `email`, `handle`, `level`, `loggedin`, `loginip`) VALUES 

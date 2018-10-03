@@ -79,13 +79,13 @@ ENGINE=InnoDB
 		if (!$userid) {
 			qa_db_query_sub('INSERT INTO `^users` 
 			(`created`, `createip`, `email`, `handle`, `level`, `loggedin`, `loginip`) VALUES 
-			(now(), 0x00, "zhihu", $, "0", now(), 0x000000)',
-			$user_id);
+			(now(), 0x00, $, $, "0", now(), 0x000000)',
+			$user_id."@zhihu", $user_name);
 			$userid = qa_db_connection()->insert_id;
 			qa_db_query_sub('INSERT INTO `^userpoints` (`userid`) VALUES (#)',
 			$userid);
-			qa_db_query_sub('INSERT INTO `^userprofile` (`userid`, title,content) VALUES (#,"name",$)',
-			$userid,$user_name);
+			// qa_db_query_sub('INSERT INTO `^userprofile` (`userid`, title,content) VALUES (#,"name",$)',
+			// $userid,$user_name);
 		}
 		return $userid;
 	}
@@ -126,8 +126,8 @@ ENGINE=InnoDB
 			if (preg_match('#/([^/]+)$#', $href, $m)) {
 				$user_id = $m[1];
 			}
-			$user_name= $u->text();
-			$q_title = $doc['.QuestionHeader-title']->text();
+			$user_name= trim($u->text());
+			$q_title = trim($doc['.QuestionHeader-title']->text());
 			list($qid, $title, $aid) = $this->insert_one($user_id, $user_name,$q_title,$answer_content);
 			return [qa_q_path($qid, $title, true, 'A', $aid),$title];
 		}

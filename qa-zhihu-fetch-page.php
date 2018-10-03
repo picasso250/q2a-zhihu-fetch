@@ -149,7 +149,11 @@ ENGINE=InnoDB
 
 		$url_error = '';
 		$link = '';
-		if ($url) {
+		if (!qa_get_logged_in_userid())
+			$qa_content['error'] = '必须登录才能使用';
+		elseif (qa_get_logged_in_level() <QA_USER_LEVEL_ADMIN)
+			$qa_content['error'] = '必须是管理员才能使用';
+		elseif ($url) {
 			$a = parse_url($url);
 
 			if ($a['host']!='www.zhihu.com') {
@@ -193,7 +197,7 @@ ENGINE=InnoDB
 			),
 		);
 
-		$qa_content['custom_2'] = '一定要经过作者同意！';
+		$qa_content['custom_2'] = '';
 
 		return $qa_content;
 	}

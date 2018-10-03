@@ -104,13 +104,37 @@ ENGINE=InnoDB
 		} 
 		return $postid;
 	}
+	function fetch($url) {
+		if (is_file(__DIR__.'/cache')) {
+			$html = file_get_contents(__DIR__.'/cache');
+		} else {
+			$html = file_get_contents($url);
+		}
+		if (!$html) {
+			$qa_content['error'] = '抓取内容为空';
+		} else {
+			// file_put_contents(__DIR__.'/cache', $html);
+
+			$doc = phpQuery::newDocument($html);
+			$answer_content = $doc['.RichText']->html();
+			$u = $doc['.UserLink-link'];
+			$href= $u->attr('href');
+			if (preg_match('#/([^/]+)$#', $href, $m)) {
+				$user_id = $m[1];
+			}
+			$user_name= $u->text();
+			$q_title = $doc['.QuestionHeader-title']->text();
+			list($qid, $title, $aid) = $this->insert_one($user_id, $user_name,$q_title,$answer_content);
+			return [qa_q_path($qid, $title, true, 'A', $aid),$title];
+		}
+	}
 	public function process_request($request)
 	{
 		require_once __DIR__.'/phpQuery/phpQuery/phpQuery.php';
 		require_once QA_INCLUDE_DIR . 'app/posts.php';
 		require_once QA_INCLUDE_DIR . 'app/post-create.php';
 
-		ini_set('error_log', __DIR__.'/php.log');
+		// ini_set('error_log', __DIR__.'/php.log');
 
 		$url = isset($_POST['url']) ? trim($_POST['url']) : '';
 
@@ -119,27 +143,17 @@ ENGINE=InnoDB
 		$qa_content['error'] = '';
 		$qa_content['custom'] = '输入答案地址，抓取答案（确定要经过作者同意）';
 
+		$url_error = '';
+		$link = '';
 		if ($url) {
-			if (0&&is_file(__DIR__.'/cache')) {
-				$html = file_get_contents(__DIR__.'/cache');
-			} else {
-				$html = file_get_contents("https://www.zhihu.com/question/20894671/answer/25747763");
-			}
-			if (!$html) {
-				$qa_content['error'] = '抓取内容为空';
-			} else {
-				// file_put_contents(__DIR__.'/cache', $html);
+			$a = parse_url($url);
 
-				$doc = phpQuery::newDocument($html);
-				$answer_content = $doc['.RichText']->html();
-				$u = $doc['.UserLink-link'];
-				$href= $u->attr('href');
-				if (preg_match('#/([^/]+)$#', $href, $m)) {
-					$user_id = $m[1];
-				}
-				$user_name= $u->text();
-				$q_title = $doc['.QuestionHeader-title']->text();
-				list($qid, $title, $aid) = $this->insert_one($user_id, $user_name,$q_title,$answer_content);
+			if ($a['host']!='www.zhihu.com') {
+				$url_error = '只能抓取知乎';
+			} elseif (!preg_match('#^/question/\d+/answer/\d+$#', $a['path'])) {
+				$url_error = '只能抓取答案';				
+			} else {
+				list($link,$title) = $this->fetch($url);
 			}
 		}
 
@@ -148,7 +162,7 @@ ENGINE=InnoDB
 
 			'style' => 'wide',
 
-			'ok' => qa_post_text('okthen') ? 'You clicked OK then!' : null,
+			'ok' => $link ? '答案抓取完毕：<a target="_blank" href="'.qa_html($link).'">'.qa_html($title)."</a>" : null,
 
 			'title' => '抓取',
 
@@ -157,7 +171,7 @@ ENGINE=InnoDB
 					'label' => '知乎答案地址',
 					'tags' => 'name="url"',
 					'value' => qa_html($url),
-					'error' => qa_html(''),
+					'error' => qa_html($url_error),
 				),
 
 			),
@@ -175,7 +189,7 @@ ENGINE=InnoDB
 			),
 		);
 
-		$qa_content['custom_2'] = '一定要经过作者同意！'.qa_q_path($qid, $title, true, 'A', $aid);
+		$qa_content['custom_2'] = '一定要经过作者同意！';
 
 		return $qa_content;
 	}

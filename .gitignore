@@ -1,0 +1,5 @@
+.deploy_*
+.deploy_histroy/
+cache
+phpQuery/
+zhihu_fetch_img/

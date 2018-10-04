@@ -4,12 +4,15 @@ class qa_zhihu_fetch_page
 {
 	private $directory;
 	private $urltoroot;
+	private $answer_content = '';
 
 
 	public function load_module($directory, $urltoroot)
 	{
 		$this->directory = $directory;
 		$this->urltoroot = $urltoroot;
+
+		$this->image_dir = 'zhihu_fetch_img';
 
 		$this->install();
 	}
@@ -25,7 +28,7 @@ class qa_zhihu_fetch_page
 	}
 	function do_install() {
 		qa_db_query_sub("
-		CREATE TABLE `^zhihu_fetch` (
+CREATE TABLE `^zhihu_fetch` (
 	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	`created` DATETIME NOT NULL,
 	`q_title` VARCHAR(255) NOT NULL COLLATE 'utf8_unicode_ci',
@@ -99,6 +102,7 @@ ENGINE=InnoDB
 		return $postid;
 	}
 	function insert_q2a_answer($qid, $userid,$answer_content) {
+		$answer_content = $this->proc_content($answer_content);
 		$sql = 'SELECT postid from ^posts where type="A" and parentid=# and userid=# limit 1';
 		$postid=qa_db_read_one_value(qa_db_query_sub($sql, $qid,$userid), true);
 		if (!$postid) {
@@ -106,9 +110,21 @@ ENGINE=InnoDB
 		} 
 		return $postid;
 	}
+	function proc_content($answer_content) {
+		$doc = phpQuery::newDocument($answer_content);
+		foreach($doc['figure'] as $i=>$e){
+			$a = pq($e)['noscript']->html();
+			pq($e)->html($a);
+			$src = pq($a)->attr('src');
+			$a = parse_url($src);
+			copy($src, $this->image_path_root."/".$a['path']);
+			pq($e)['img']->attr('src', $this->urltoroot.$this->image_dir."/".$a['path']);
+		}
+		return $this->answer_content = $doc->html();
+	}
 	function fetch($url) {
 		if (
-			0&&
+			0&& // switch of not cache
 			is_file(__DIR__.'/cache')) {
 			$html = file_get_contents(__DIR__.'/cache');
 		} else {
@@ -147,15 +163,17 @@ ENGINE=InnoDB
 		$qa_content['error'] = '';
 		$qa_content['custom'] = '输入答案地址，抓取答案（确定要经过作者同意）';
 
+		$this->image_path_root = $this->directory.$this->image_dir;
 		$url_error = '';
 		$link = '';
 		if (!qa_get_logged_in_userid())
 			$qa_content['error'] = '必须登录才能使用';
 		elseif (qa_get_logged_in_level() <QA_USER_LEVEL_ADMIN)
 			$qa_content['error'] = '必须是管理员才能使用';
+		elseif (!is_dir($this->image_path_root))
+			mkdir($this->image_path_root);
 		elseif ($url) {
 			$a = parse_url($url);
-
 			if ($a['host']!='www.zhihu.com') {
 				$url_error = '只能抓取知乎';
 			} elseif (!preg_match('#^/question/\d+/answer/\d+$#', $a['path'])) {
@@ -197,7 +215,7 @@ ENGINE=InnoDB
 			),
 		);
 
-		$qa_content['custom_2'] = '';
+		$qa_content['custom_2'] = $this->answer_content;
 
 		return $qa_content;
 	}

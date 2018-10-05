@@ -98,7 +98,7 @@ ENGINE=InnoDB
 		if (!$postid) {
 			$type = 'Q';
 			$postid=qa_post_create($type, $parentpostid=null, $title=$q_title, $content='', $format='html', $categoryid=null, $tags='', $userid);
-		} 
+		}
 		return $postid;
 	}
 	function insert_q2a_answer($qid, $userid,$answer_content) {
@@ -118,7 +118,8 @@ ENGINE=InnoDB
 			$src = pq($a)->attr('src');
 			$a = parse_url($src);
 			copy($src, $this->image_path_root."/".$a['path']);
-			pq($e)['img']->attr('src', $this->urltoroot.$this->image_dir."/".$a['path']);
+			pq($e)['img']->attr('src', "/".$this->image_dir.$a['path'])
+				->attr('width', '');
 		}
 		return $this->answer_content = $doc->html();
 	}
@@ -163,7 +164,7 @@ ENGINE=InnoDB
 		$qa_content['error'] = '';
 		$qa_content['custom'] = '输入答案地址，抓取答案（确定要经过作者同意）';
 
-		$this->image_path_root = $this->directory.$this->image_dir;
+		$this->image_path_root = dirname(dirname($this->directory))."/".$this->image_dir;
 		$url_error = '';
 		$link = '';
 		if (!qa_get_logged_in_userid())
@@ -171,7 +172,7 @@ ENGINE=InnoDB
 		elseif (qa_get_logged_in_level() <QA_USER_LEVEL_ADMIN)
 			$qa_content['error'] = '必须是管理员才能使用';
 		elseif (!is_dir($this->image_path_root))
-			mkdir($this->image_path_root);
+			$qa_content['error'] = "mkdir $this->image_dir && chmod +w $this->image_dir";
 		elseif ($url) {
 			$a = parse_url($url);
 			if ($a['host']!='www.zhihu.com') {
